@@ -10,6 +10,15 @@
 #import <CoreBluetooth/CBCentralManager.h>
 #import "SerialPort.h"
 
+// speed limits
+#define kMaxSpeed 25.0
+#define kMinSpeed 0
+// instructions
+#define kMotorSpeed @"motorSpeed"
+#define kMotorDistance @"motorDistance"
+#define kMotorBattery @"motorBattery"
+#define kMotorError @"motorError"
+
 typedef enum
 {
     CHAT_S_NOT_LOADED,
@@ -21,7 +30,7 @@ typedef enum
 } CHAT_State;
 
 @protocol BTConnectionManagerDelegate <NSObject>
-- (void)useMotorDict:(NSDictionary *)dataDict;
+- (void)userRecievedDict:(NSDictionary *)dataDict;
 @end
 
 @interface BTConnectionManager : NSObject <CBCentralManagerDelegate, SerialPortDelegate>

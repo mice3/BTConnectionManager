@@ -183,7 +183,7 @@
                                           kMotorBattery: [NSNumber numberWithInt:[self instructionGetBatteryLevel:str]],
                                           kMotorError: [NSNumber numberWithInt:[self instructionGetError:str]]};
         
-        [self.delegate useMotorDict:instructionDict];
+        [self.delegate userRecievedDict:instructionDict];
     }
 }
 
