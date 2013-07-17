@@ -230,7 +230,7 @@
 
         //    d1000s100b100e100
         int distance = arc4random() % 10001;
-        int speed = arc4random() % ((int)kMaxSpeed + 1);
+        int speed = arc4random() % ((int)25 + 1);
         int battery = arc4random() % 101;
         int error = arc4random() % 11;
         NSString *instruction = [NSString stringWithFormat:@"d%04ds%03db%03de%03d", distance, speed, battery, error];

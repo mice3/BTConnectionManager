@@ -11,7 +11,6 @@
 #import "SerialPort.h"
 
 // speed limits
-#define kMaxSpeed 25.0
 #define kMinSpeed 0
 // instructions
 #define kMotorSpeed @"motorSpeed"
