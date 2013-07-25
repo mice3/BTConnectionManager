@@ -54,12 +54,19 @@
     [self.serialPort open];
     state = CHAT_S_APPEARED_IDLE;
     self.timer = [NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(requestMotorDict) userInfo:nil repeats:YES];
+    
+    if ([self.delegate respondsToSelector:@selector(peripheralConnected)]) {
+        [self.delegate performSelector:@selector(peripheralConnected) withObject:nil];
+    }
 }
 
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
 //    self.discoveredPeripheral = nil;
     NSLog(@"Peripheral disconnected!");
+    if ([self.delegate respondsToSelector:@selector(peripheralDisconnected)]) {
+        [self.delegate performSelector:@selector(peripheralDisconnected) withObject:nil];
+    }
     self.discoveredPeripheral = nil;
     [self.serialPort close];
     state = CHAT_S_APPEARED_NO_CONNECT_PERIPH;
@@ -96,6 +103,9 @@
     //NSLog(@"Central Manager State: %d", [central state]);
     
     if(central.state == CBCentralManagerStatePoweredOn) {
+        if ([self.delegate respondsToSelector:@selector(readyToScanForPeripherals)]) {
+            [self.delegate performSelector:@selector(readyToScanForPeripherals) withObject:nil];
+        }
         [self.centralManager retrieveConnectedPeripherals];
     }
 }

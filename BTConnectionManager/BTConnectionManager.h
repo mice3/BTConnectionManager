@@ -30,6 +30,10 @@ typedef enum
 
 @protocol BTConnectionManagerDelegate <NSObject>
 - (void)userRecievedDict:(NSDictionary *)dataDict;
+-(void)readyToScanForPeripherals;
+@optional
+-(void)peripheralConnected;
+-(void)peripheralDisconnected;
 @end
 
 @interface BTConnectionManager : NSObject <CBCentralManagerDelegate, SerialPortDelegate>
