@@ -55,5 +55,6 @@ typedef enum
 -(int)instructionGetError:(NSString *)instruction;
 -(int)instructionGetRange:(NSRange)range
           fromInstruction:(NSString *)instruction;
+-(NSString *)getDiscoveredPeripheralId;
 
 @end

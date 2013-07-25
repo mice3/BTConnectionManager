@@ -292,4 +292,10 @@
 {
     return [[instruction substringWithRange:range] intValue];
 }
+
+-(NSString *)getDiscoveredPeripheralId
+{
+    return self.discoveredPeripheral.identifier.UUIDString;
+}
+
 @end
