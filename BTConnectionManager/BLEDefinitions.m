@@ -34,6 +34,10 @@ const unsigned char accServiceUuid[SERVICE_UUID_DEFAULT_LEN]       = {0xff, 0xa0
 const unsigned char tempServiceUuid[SERVICE_UUID_DEFAULT_LEN]      = {0xff, 0xe0};
 const unsigned char ledServiceUuid[SERVICE_UUID_DEFAULT_LEN]       = {0xff, 0xd0};
 
+// mass characteristics
+const unsigned char massServiceUuid[CHARACT_UUID_DEFAULT_LEN]               = {0xff, 0xc0};
+const unsigned char massCharactUuid[CHARACT_UUID_DEFAULT_LEN]               = {0xff, 0xc1};
+
 const unsigned char   serialPortServiceUuid[SERIAL_PORT_SERVICE_UUID_LEN] = {
     0x24, 0x56, 0xe1, 0xb9, 0x26, 0xe2, 0x8f, 0x83,
     0xe7, 0x44, 0xf3, 0x4f, 0x01, 0xe9, 0xd7, 0x01};
@@ -186,6 +190,11 @@ NSString* strFromServiceUUID(CBUUID *uuid)
     {
         str = @"Running Speed and Cadence";
     }
+    else if( (uuid.data.length == SERVICE_UUID_DEFAULT_LEN) &&
+            (memcmp(uuid.data.bytes, massServiceUuid, SERVICE_UUID_DEFAULT_LEN) == 0))
+    {
+        str = @"Mass";
+    }
     else
     {
         str = [[NSString alloc] initWithFormat:@"%@", uuid];
@@ -316,6 +325,15 @@ NSString* strFromCharacteristicUUID(CBUUID *serviceUuid, CBUUID *charactUuid)
                 (memcmp(charactUuid.data.bytes, regCertCharactUuid,CHARACT_UUID_DEFAULT_LEN) == 0))
         {
             str = @"Regulatory Certification";
+        }
+    }
+    else if( (serviceUuid.data.length == SERVICE_UUID_DEFAULT_LEN) &&
+            (memcmp(serviceUuid.data.bytes, massServiceUuid, SERVICE_UUID_DEFAULT_LEN) == 0))
+    {
+        if((charactUuid.data.length == CHARACT_UUID_DEFAULT_LEN) &&
+           (memcmp(charactUuid.data.bytes, massCharactUuid, CHARACT_UUID_DEFAULT_LEN) == 0))
+        {
+            str = @"Mass";
         }
     }
     

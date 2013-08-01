@@ -46,6 +46,10 @@ extern const unsigned char swRevisionCharactUuid[CHARACT_UUID_DEFAULT_LEN];
 extern const unsigned char manufactNameCharactUuid[CHARACT_UUID_DEFAULT_LEN];
 extern const unsigned char regCertCharactUuid[CHARACT_UUID_DEFAULT_LEN];
 
+// RokC: mass service
+extern const unsigned char massServiceUuid[CHARACT_UUID_DEFAULT_LEN];
+extern const unsigned char massCharactUuid[CHARACT_UUID_DEFAULT_LEN];
+
 extern NSString* strFromServiceUUID(CBUUID *uuid);
 extern NSString* strFromCharacteristicUUID(CBUUID *serviceUuid, CBUUID *charactUuid);
 extern NSString* strFromCharacteristicValue(CBUUID *serviceUuid, CBUUID *uuid, NSData* value);

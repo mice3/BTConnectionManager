@@ -9,15 +9,22 @@
 #import "BTConnectionManager.h"
 #import "DiscoveredPeripheral.h"
 #import <Foundation/NSException.h>
+#import <CoreBluetooth/CBPeripheral.h>
+#import <CoreBluetooth/CBUUID.h>
+#import <CoreBluetooth/CBService.h>
+#import <CoreBluetooth/CBCharacteristic.h>
 
 @interface BTConnectionManager ()
 
 @property (nonatomic, retain) UIView *transparentView;
 @property (nonatomic, strong) CBCentralManager *centralManager;
-@property (nonatomic, strong) CBPeripheral  *discoveredPeripheral;
-@property (nonatomic, strong) SerialPort *serialPort;
 @property (nonatomic, strong) NSMutableArray  *messageQueue;
 @property (nonatomic, retain) NSTimer *timer;
+
+@property (nonatomic, retain) CBService *massService;
+@property (nonatomic, retain) CBCharacteristic *massCharact;
+
+@property (nonatomic, strong) CBPeripheral  *connectedPeripheral;
 
 @end
 
@@ -38,23 +45,22 @@
     return self;
 }
 
-- (void) scan {
+- (void) scan
+{
     NSLog(@"Started scanning");
+    
     NSDictionary *dictionary = [NSDictionary dictionaryWithObject:[NSNumber numberWithInt:1] forKey:CBCentralManagerScanOptionAllowDuplicatesKey];
 
     [self.centralManager scanForPeripheralsWithServices:nil options:dictionary];
 }
 
 #pragma mark - CBCentraManagerDelegate
-
 -(void)centralManager:(CBCentralManager *)central didConnectPeripheral:(CBPeripheral *)peripheral
 {
     NSLog(@"Peripheral connected!");
-    self.serialPort = [[SerialPort alloc] initWithPeripheral:self.discoveredPeripheral andDelegate:self];
-    [self.serialPort open];
     state = CHAT_S_APPEARED_IDLE;
-    self.timer = [NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(requestMotorDict) userInfo:nil repeats:YES];
-    
+    [self initConnectedPeripheral];
+
     if ([self.delegate respondsToSelector:@selector(peripheralConnected)]) {
         [self.delegate performSelector:@selector(peripheralConnected) withObject:nil];
     }
@@ -62,16 +68,14 @@
 
 - (void)centralManager:(CBCentralManager *)central didDisconnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
-//    self.discoveredPeripheral = nil;
     NSLog(@"Peripheral disconnected!");
     if ([self.delegate respondsToSelector:@selector(peripheralDisconnected)]) {
         [self.delegate performSelector:@selector(peripheralDisconnected) withObject:nil];
     }
-    self.discoveredPeripheral = nil;
-    [self.serialPort close];
+    self.connectedPeripheral = nil;
+    self.connectedPeripheral.delegate = nil;
     state = CHAT_S_APPEARED_NO_CONNECT_PERIPH;
-    self.serialPort = nil;
-    [self.timer invalidate];
+//    [self.timer invalidate];
     self.timer = nil;
     
     [self scan];
@@ -80,12 +84,11 @@
 - (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary *)advertisementData RSSI:(NSNumber *)RSSI
 {
     NSLog(@"Peripheral discovered!");
-    if(peripheral && !self.discoveredPeripheral) {
-        self.discoveredPeripheral = peripheral;
-        
+    if(peripheral && !self.connectedPeripheral) {
+        self.connectedPeripheral = peripheral;
         NSDictionary *dictionary = [NSDictionary dictionaryWithObject:[NSNumber numberWithInt:1] forKey:CBConnectPeripheralOptionNotifyOnDisconnectionKey];
         
-        [self.centralManager connectPeripheral:self.discoveredPeripheral options:dictionary];
+        [self.centralManager connectPeripheral:self.connectedPeripheral options:dictionary];
         
         [self.centralManager stopScan];
     }
@@ -94,7 +97,8 @@
 
 - (void)centralManager:(CBCentralManager *)central didFailToConnectPeripheral:(CBPeripheral *)peripheral error:(NSError *)error
 {
-    self.discoveredPeripheral = nil;
+    self.connectedPeripheral = nil;
+    self.connectedPeripheral.delegate = nil;
     NSLog(@"Peripheral failed to connect!");
 }
 
@@ -110,202 +114,157 @@
     }
 }
 
-- (void) writeFromFifo
+#pragma mark - Peripheral delegate methods
+- (BOOL)displayPeripheral: (CBPeripheral*)periph andCharacteristic: (CBCharacteristic*) charact
 {
-    unsigned char   buf[SP_MAX_WRITE_SIZE];
-    NSUInteger      len;
+    char *p = (char*)charact.value.bytes;
+    //    NSInteger val;
+    BOOL ok = NO;
     
-    if(state == CHAT_S_APPEARED_IDLE && self.messageQueue.count > 0)
-    {
-        NSString *message = [self.messageQueue objectAtIndex:0];
-        NSRange range;
-        range.location = 0;
-        range.length = message.length;
-        
-        BOOL ok = [message getBytes:buf maxLength:SP_MAX_WRITE_SIZE usedLength:&len encoding:NSUTF8StringEncoding options:NSStringEncodingConversionAllowLossy range:range remainingRange:&range];
-        
-        NSData *data = [NSData  dataWithBytes:buf length:len];
-        
-        
-        NSInteger nWrites = 0;
-        if(self.serialPort.isOpen)  {
-            ok = [self.serialPort write:data];
-            
-            if(ok)
-                nWrites++;
+    if (charact == self.massCharact) {
+        NSArray *dataArray = [NSArray arrayWithObjects:
+                              [NSNumber numberWithUnsignedChar:p[3]],
+                              [NSNumber numberWithUnsignedChar:p[2]],
+                              [NSNumber numberWithUnsignedChar:p[1]],
+                              [NSNumber numberWithUnsignedChar:p[0]], nil];
+        int totalValue = 0;
+        int dataArrayLength = [dataArray count] - 1;
+        for (int i = dataArrayLength; i >= 0; i--) {
+            int tmpValue = [[dataArray objectAtIndex:i] intValue] * pow(16, dataArrayLength - i);
+            totalValue += tmpValue * pow(16, dataArrayLength - i);
         }
         
-        if(nWrites > 0) {
-            [self.messageQueue removeObjectAtIndex:0];
-//            state = CHAT_S_APPEARED_WAIT_TX;
-        }
-    }
-}
-
-- (void)sendMessage:(NSString *)message
-{
-    if((state == CHAT_S_APPEARED_IDLE || state == CHAT_S_APPEARED_WAIT_TX)
-       && message.length > 0
-       && self.serialPort) {
-        [self.messageQueue addObject:message];
-        
-        if(state == CHAT_S_APPEARED_IDLE) {
-            [self writeFromFifo];
-        }
-    }
-}
-
-- (void) port: (SerialPort*) sp event : (SPEvent) ev error: (NSInteger)err
-{
-    switch(ev)
-    {
-        case SP_EVT_OPEN:
-            [self writeFromFifo];
-            break;
-            
-        default:
-            break;
-    }
-}
-
-- (void) writeComplete: (SerialPort*) serialPort withError:(NSInteger)err
-{
-    BOOL done = TRUE;
-    
-//    NSAssert2(state == CHAT_S_APPEARED_WAIT_TX, @"%s, %d", __FILE__, __LINE__);
-    
-    if(self.serialPort.isWriting) {
-        done = FALSE;
-    }
-    
-    if(done) {
-        state = CHAT_S_APPEARED_IDLE;
-        [self writeFromFifo];
-    }
-}
-
-- (void) port: (SerialPort*) sp receivedData: (NSData*)data
-{    
-    NSString *str = [[NSString alloc] initWithBytes:data.bytes length:data.length encoding:NSUTF8StringEncoding];
-    if (str.length == 17) {
-        NSDictionary *instructionDict = @{kMotorSpeed: [NSNumber numberWithInt:[self instructionGetSpeed:str]],
-                                          kMotorDistance: [NSNumber numberWithInt:[self instructionGetDistance:str]],
-                                          kMotorBattery: [NSNumber numberWithInt:[self instructionGetBatteryLevel:str]],
-                                          kMotorError: [NSNumber numberWithInt:[self instructionGetError:str]]};
-        
+        NSDictionary *instructionDict = @{@"value": [NSNumber numberWithInt:totalValue]};
         [self.delegate userRecievedDict:instructionDict];
+        ok = YES;
+    }
+    
+    
+    return ok;
+}
+
+- (BOOL) initCharacteristicForService:(CBService*)serv andCharact:(CBCharacteristic*)charact
+{
+    BOOL done = NO;
+    
+    //BOOL updated;
+    if((self.connectedPeripheral != nil) && (self.connectedPeripheral.isConnected == TRUE))
+    {
+        if((serv.UUID.data.length == SERVICE_UUID_DEFAULT_LEN) &&
+           (memcmp(serv.UUID.data.bytes, massServiceUuid, SERVICE_UUID_DEFAULT_LEN) == 0))
+        {
+            self.massService = serv;
+            
+            if((charact != nil) &&
+               (charact.UUID.data.length == CHARACT_UUID_DEFAULT_LEN) &&
+               (memcmp(charact.UUID.data.bytes, massCharactUuid, CHARACT_UUID_DEFAULT_LEN) == 0))
+            {
+                self.massCharact = charact;
+                [self.connectedPeripheral setNotifyValue:YES forCharacteristic:charact];
+                //updated = [self displayPeripheral: connectedPeripheral andCharacteristic: accRangeCharact];
+                
+                //if(updated == FALSE)
+                [self.connectedPeripheral readValueForCharacteristic: charact];
+                
+                done = YES;
+            }
+        }
+    }
+    
+    return done;
+}
+
+- (void) initConnectedPeripheral
+{
+    CBService*          service;
+    CBCharacteristic*   charact;
+    BOOL                ok;
+    
+    self.massCharact = nil;
+    
+    self.connectedPeripheral.delegate = self;
+    
+    if(self.connectedPeripheral.services != nil) {
+        for(int i = 0; i < self.connectedPeripheral.services.count; i++) {
+            service = [self.connectedPeripheral.services objectAtIndex:i];
+            
+            if((service.characteristics != nil) && (service.characteristics.count > 0)) {
+                for(int j = 0; j < service.characteristics.count; j++) {
+                    charact = [service.characteristics objectAtIndex:j];
+                    
+                    ok = [self initCharacteristicForService:service andCharact:charact];
+                }
+            }
+            else {
+                ok = [self initCharacteristicForService:service andCharact:nil];
+            }
+        }
+    }
+    
+    NSMutableArray *arr = [[NSMutableArray alloc] init];
+    NSData *data;
+    CBUUID *uuid;
+    
+    if(self.massService == nil) {
+        data = [NSData dataWithBytes:massServiceUuid length:SERVICE_UUID_DEFAULT_LEN];
+        uuid = [CBUUID UUIDWithData: data];
+        [arr addObject:uuid];
+    } else if(self.massCharact == nil) {
+        [self.connectedPeripheral discoverCharacteristics:nil forService:self.massService];
+    }
+    
+    if(arr.count > 0) {
+        [self.connectedPeripheral discoverServices:arr];
     }
 }
 
 
-#pragma mark - Write instructions
--(NSString *)instructionLock
+
+- (void)peripheral:(CBPeripheral *)periph didDiscoverServices:(NSError *)error
 {
-    NSString *message = [self instructionSetSpeed:0 lock:1];
-    [self sendMessage:message];
-
-    return message;
-}
-
--(NSString *)instructionUnlock
-{
-
-    NSString *message = [self instructionSetSpeed:0 lock:0];
-    [self sendMessage:message];
+    CBService   *s;
     
-    return message;
-}
-
--(NSString *)instructionSetSpeed:(int)speed
-{
-    NSString *message = [self instructionSetSpeed:speed lock:0];
-    [self sendMessage:message];
-    
-    return message;
-}
-
--(NSString *)instructionSetSpeed:(int)speed
-                            lock:(int)lock
-{
-    NSString *message = [NSString stringWithFormat:@"H%03dZ%02d", speed, lock];
-    
-    return message;
-}
-
-#pragma mark - Read instructions
--(void)requestMotorDict
-{
-#warning RokC the sendMessage part is only intended for test purposes. Afterwards the motor will send periodic messages
-    if (self.discoveredPeripheral) {
-
-        //    d1000s100b100e100
-        int distance = arc4random() % 10001;
-        int speed = arc4random() % ((int)25 + 1);
-        int battery = arc4random() % 101;
-        int error = arc4random() % 11;
-        NSString *instruction = [NSString stringWithFormat:@"d%04ds%03db%03de%03d", distance, speed, battery, error];
-        
-        [self sendMessage:instruction];
-        NSLog(@"%@", instruction);
-    } else {
-        NSLog(@"Peripheral not connected!");
+    if(periph == self.connectedPeripheral) {
+        for(int i = 0; i < periph.services.count; i++) {
+            s = [[periph services] objectAtIndex:i];
+            [periph discoverCharacteristics:nil forService:s];
+        }
     }
 }
 
-
--(int)instructionGetSpeed:(NSString *)instruction
+- (void)peripheral:(CBPeripheral *)periph didDiscoverCharacteristicsForService:(CBService *)serv error:(NSError *)error
 {
-    int speed = [self instructionGetRange:kGetSpeedRange fromInstruction:instruction];
+    CBCharacteristic* charact;
+    BOOL ok;
     
-
-    NSString *message = [NSString stringWithFormat:@"%i", speed];
-    [self sendMessage:message];
-    
-    return speed;
+    if(periph == self.connectedPeripheral)
+    {
+        for(int i = 0; i < serv.characteristics.count; i++)
+        {
+            charact = [serv.characteristics objectAtIndex:i];
+            
+            ok = [self initCharacteristicForService:serv andCharact:charact];
+        }
+    }
 }
 
--(int)instructionGetDistance:(NSString *)instruction
+- (void)peripheral:(CBPeripheral *)periph didUpdateValueForCharacteristic:(CBCharacteristic *)charact error:(NSError *)error
 {
-    int distance = [self instructionGetRange:kGetDistancedRange fromInstruction:instruction];
-    
-
-    NSString *message = [NSString stringWithFormat:@"%i", distance];
-    [self sendMessage:message];
-    
-    return distance;
+    if(!error) {
+        [self displayPeripheral: periph andCharacteristic: charact];
+    }
 }
 
--(int)instructionGetBatteryLevel:(NSString *)instruction
+- (void)peripheral:(CBPeripheral *)periph didWriteValueForCharacteristic:(CBCharacteristic *)charact error:(NSError *)error
 {
-    int batteryLevel = [self instructionGetRange:kGetBatteryLevelRange fromInstruction:instruction];
-    
-
-    NSString *message = [NSString stringWithFormat:@"%i", batteryLevel];
-    [self sendMessage:message];
-    
-    return batteryLevel;
-}
-
--(int)instructionGetError:(NSString *)instruction
-{  
-    int error = [self instructionGetRange:kGetErrorRange fromInstruction:instruction];
-    
-
-    NSString *message = [NSString stringWithFormat:@"%i", error];
-    [self sendMessage:message];
-    
-    return error;
-}
-
--(int)instructionGetRange:(NSRange)range
-          fromInstruction:(NSString *)instruction
-{
-    return [[instruction substringWithRange:range] intValue];
+    if(periph == self.connectedPeripheral) {
+        [periph readValueForCharacteristic: charact];
+    }
 }
 
 -(NSString *)getDiscoveredPeripheralId
 {
-    return self.discoveredPeripheral.identifier.UUIDString;
+    return self.connectedPeripheral.identifier.UUIDString;
 }
 
 @end

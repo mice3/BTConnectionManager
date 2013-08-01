@@ -8,7 +8,8 @@
 
 #import <Foundation/Foundation.h>
 #import <CoreBluetooth/CBCentralManager.h>
-#import "SerialPort.h"
+#import <CoreBluetooth/CBPeripheral.h>
+#import "BLEDefinitions.h"
 
 // speed limits
 #define kMinSpeed 0
@@ -36,7 +37,7 @@ typedef enum
 -(void)peripheralDisconnected;
 @end
 
-@interface BTConnectionManager : NSObject <CBCentralManagerDelegate, SerialPortDelegate>
+@interface BTConnectionManager : NSObject <CBCentralManagerDelegate, CBPeripheralDelegate>
 {
     CHAT_State      state;
 }
@@ -44,21 +45,6 @@ typedef enum
 
 
 -(void)scan;
-
-// setters
--(NSString *)instructionLock;
--(NSString *)instructionUnlock;
--(NSString *)instructionSetSpeed:(int)speed;
--(NSString *)instructionSetSpeed:(int)speed
-                            lock:(int)lock;
-// getters
--(void)requestMotorDict;
--(int)instructionGetSpeed:(NSString *)instruction;
--(int)instructionGetDistance:(NSString *)instruction;
--(int)instructionGetBatteryLevel:(NSString *)instruction;
--(int)instructionGetError:(NSString *)instruction;
--(int)instructionGetRange:(NSRange)range
-          fromInstruction:(NSString *)instruction;
 -(NSString *)getDiscoveredPeripheralId;
 
 @end
