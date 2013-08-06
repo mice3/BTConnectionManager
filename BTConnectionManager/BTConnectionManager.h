@@ -30,7 +30,7 @@ typedef enum
 } CHAT_State;
 
 @protocol BTConnectionManagerDelegate <NSObject>
-- (void)userRecievedDict:(NSDictionary *)dataDict;
+-(void)useRecievedDict:(NSDictionary *)dataDict;
 -(void)readyToScanForPeripherals;
 @optional
 -(void)peripheralConnected;
@@ -43,8 +43,9 @@ typedef enum
 }
 @property (nonatomic, strong) id<BTConnectionManagerDelegate> delegate;
 
-
++(BTConnectionManager *)sharedInstance;
 -(void)scan;
 -(NSString *)getDiscoveredPeripheralId;
+-(double)getMass;
 
 @end

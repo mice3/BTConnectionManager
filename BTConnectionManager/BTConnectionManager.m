@@ -33,14 +33,25 @@
 #define kGetBatteryLevelRange NSMakeRange(10, 3)
 #define kGetErrorRange NSMakeRange(14, 3)
 
+static BTConnectionManager *instanceOfBTConnectionManager;
+
 @implementation BTConnectionManager
 
++(BTConnectionManager *)sharedInstance
+{
+    if (instanceOfBTConnectionManager) {
+        return instanceOfBTConnectionManager;
+    } else {
+        return [[BTConnectionManager alloc] init];
+    }
+}
 
 -(id)init
 {
     if (self = [super init]) {
         self.centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
         self.messageQueue = [[NSMutableArray alloc] init];
+        instanceOfBTConnectionManager = self;
     }
     return self;
 }
@@ -117,25 +128,13 @@
 #pragma mark - Peripheral delegate methods
 - (BOOL)displayPeripheral: (CBPeripheral*)periph andCharacteristic: (CBCharacteristic*) charact
 {
-    char *p = (char*)charact.value.bytes;
-    //    NSInteger val;
+//    char *p = (char *)charact.value.bytes;
     BOOL ok = NO;
-    
     if (charact == self.massCharact) {
-        NSArray *dataArray = [NSArray arrayWithObjects:
-                              [NSNumber numberWithUnsignedChar:p[3]],
-                              [NSNumber numberWithUnsignedChar:p[2]],
-                              [NSNumber numberWithUnsignedChar:p[1]],
-                              [NSNumber numberWithUnsignedChar:p[0]], nil];
-        int totalValue = 0;
-        int dataArrayLength = [dataArray count] - 1;
-        for (int i = dataArrayLength; i >= 0; i--) {
-            int tmpValue = [[dataArray objectAtIndex:i] intValue] * pow(16, dataArrayLength - i);
-            totalValue += tmpValue * pow(16, dataArrayLength - i);
+        NSDictionary *instructionDict = @{@"value": [Helpers reveseNSData:charact.value]};
+        if ([self.delegate respondsToSelector:@selector(useRecievedDict:)]) {
+            [self.delegate useRecievedDict:instructionDict];
         }
-        
-        NSDictionary *instructionDict = @{@"value": [NSNumber numberWithInt:totalValue]};
-        [self.delegate userRecievedDict:instructionDict];
         ok = YES;
     }
     
@@ -265,6 +264,19 @@
 -(NSString *)getDiscoveredPeripheralId
 {
     return self.connectedPeripheral.identifier.UUIDString;
+}
+
+#pragma mark - H2OPal specific methods
+-(double)getMass
+{
+    NSData *result = [Helpers reveseNSData:self.massCharact.value];
+    
+    unsigned mass = 0;
+    NSScanner *scanner = [NSScanner scannerWithString:[result description]];
+    [scanner setScanLocation:1]; // bypass '#' character
+    [scanner scanHexInt:&mass];
+    
+    return mass;
 }
 
 @end
