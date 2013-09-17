@@ -131,10 +131,10 @@ static BTConnectionManager *instanceOfBTConnectionManager;
 //    char *p = (char *)charact.value.bytes;
     BOOL ok = NO;
     if (charact == self.massCharact) {
-        NSDictionary *instructionDict = @{@"value": [Helpers reveseNSData:charact.value]};
-        if ([self.delegate respondsToSelector:@selector(useRecievedDict:)]) {
-            [self.delegate useRecievedDict:instructionDict];
-        }
+//        NSDictionary *instructionDict = @{@"value": [Helpers reveseNSData:charact.value]};
+//        if ([self.delegate respondsToSelector:@selector(useRecievedDict:)]) {
+//            [self.delegate useRecievedDict:instructionDict];
+//        }
         ok = YES;
     }
     
@@ -263,18 +263,19 @@ static BTConnectionManager *instanceOfBTConnectionManager;
 
 -(NSString *)getDiscoveredPeripheralId
 {
-    return self.connectedPeripheral.identifier.UUIDString;
+    return @"";
+//    return self.connectedPeripheral.identifier.UUIDString;
 }
 
 #pragma mark - H2OPal specific methods
 -(double)getMass
 {
-    NSData *result = [Helpers reveseNSData:self.massCharact.value];
+//    NSData *result = [Helpers reveseNSData:self.massCharact.value];
     
     unsigned mass = 0;
-    NSScanner *scanner = [NSScanner scannerWithString:[result description]];
-    [scanner setScanLocation:1]; // bypass '#' character
-    [scanner scanHexInt:&mass];
+//    NSScanner *scanner = [NSScanner scannerWithString:[result description]];
+//    [scanner setScanLocation:1]; // bypass '#' character
+//    [scanner scanHexInt:&mass];
     
     return mass;
 }
