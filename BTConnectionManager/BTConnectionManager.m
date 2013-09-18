@@ -89,7 +89,9 @@ static BTConnectionManager *instanceOfBTConnectionManager;
 //    [self.timer invalidate];
     self.timer = nil;
     
+#if !TARGET_IPHONE_SIMULATOR
     [self scan];
+#endif
 }
 
 - (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary *)advertisementData RSSI:(NSNumber *)RSSI
