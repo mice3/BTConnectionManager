@@ -58,11 +58,13 @@ static BTConnectionManager *instanceOfBTConnectionManager;
 
 - (void) scan
 {
+#if !TARGET_IPHONE_SIMULATOR
     NSLog(@"Started scanning");
     
     NSDictionary *dictionary = [NSDictionary dictionaryWithObject:[NSNumber numberWithInt:1] forKey:CBCentralManagerScanOptionAllowDuplicatesKey];
 
     [self.centralManager scanForPeripheralsWithServices:nil options:dictionary];
+#endif
 }
 
 #pragma mark - CBCentraManagerDelegate
@@ -89,9 +91,7 @@ static BTConnectionManager *instanceOfBTConnectionManager;
 //    [self.timer invalidate];
     self.timer = nil;
     
-#if !TARGET_IPHONE_SIMULATOR
     [self scan];
-#endif
 }
 
 - (void)centralManager:(CBCentralManager *)central didDiscoverPeripheral:(CBPeripheral *)peripheral advertisementData:(NSDictionary *)advertisementData RSSI:(NSNumber *)RSSI
