@@ -49,7 +49,7 @@ static BTConnectionManager *instanceOfBTConnectionManager;
 -(id)init
 {
     if (self = [super init]) {
-        self.centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
+        self.centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:dispatch_get_main_queue() options:nil];
         self.messageQueue = [[NSMutableArray alloc] init];
         instanceOfBTConnectionManager = self;
     }
@@ -85,6 +85,8 @@ static BTConnectionManager *instanceOfBTConnectionManager;
     }
     self.connectedPeripheral = nil;
     self.connectedPeripheral.delegate = nil;
+    self.massCharact = nil;
+    self.massService = nil;
     state = CHAT_S_APPEARED_NO_CONNECT_PERIPH;
 //    [self.timer invalidate];
     self.timer = nil;
@@ -179,8 +181,6 @@ static BTConnectionManager *instanceOfBTConnectionManager;
     CBCharacteristic*   charact;
     BOOL                ok;
     
-    self.massCharact = nil;
-    
     self.connectedPeripheral.delegate = self;
     
     if(self.connectedPeripheral.services != nil) {
@@ -204,11 +204,11 @@ static BTConnectionManager *instanceOfBTConnectionManager;
     NSData *data;
     CBUUID *uuid;
     
-    if(self.massService == nil) {
+    if(!self.massService) {
         data = [NSData dataWithBytes:massServiceUuid length:SERVICE_UUID_DEFAULT_LEN];
         uuid = [CBUUID UUIDWithData: data];
         [arr addObject:uuid];
-    } else if(self.massCharact == nil) {
+    } else if(!self.massCharact) {
         [self.connectedPeripheral discoverCharacteristics:nil forService:self.massService];
     }
     
