@@ -37,15 +37,15 @@ typedef enum
 -(void)peripheralDisconnected;
 @end
 
-@interface BTConnectionManager : NSObject <CBCentralManagerDelegate, CBPeripheralDelegate>
+@interface BTConnectionManager : NSObject <CBCentralManagerDelegate>
 {
     CHAT_State      state;
 }
 @property (nonatomic, strong) id<BTConnectionManagerDelegate> delegate;
+@property (nonatomic, strong) CBPeripheral  *connectedPeripheral;
 
 +(BTConnectionManager *)sharedInstance;
 -(void)scan;
 -(NSString *)getDiscoveredPeripheralId;
--(double)getMass;
 
 @end

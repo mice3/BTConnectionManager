@@ -21,11 +21,6 @@
 @property (nonatomic, strong) NSMutableArray  *messageQueue;
 @property (nonatomic, retain) NSTimer *timer;
 
-@property (nonatomic, retain) CBService *massService;
-@property (nonatomic, retain) CBCharacteristic *massCharact;
-
-@property (nonatomic, strong) CBPeripheral  *connectedPeripheral;
-
 @end
 
 #define kGetDistancedRange NSMakeRange(1, 4)
@@ -72,7 +67,7 @@ static BTConnectionManager *instanceOfBTConnectionManager;
 {
     NSLog(@"Peripheral connected!");
     state = CHAT_S_APPEARED_IDLE;
-    [self initConnectedPeripheral];
+//    [self initConnectedPeripheral];
 
     if ([self.delegate respondsToSelector:@selector(peripheralConnected)]) {
         [self.delegate performSelector:@selector(peripheralConnected) withObject:nil];
@@ -87,8 +82,6 @@ static BTConnectionManager *instanceOfBTConnectionManager;
     }
     self.connectedPeripheral = nil;
     self.connectedPeripheral.delegate = nil;
-    self.massCharact = nil;
-    self.massService = nil;
     state = CHAT_S_APPEARED_NO_CONNECT_PERIPH;
 //    [self.timer invalidate];
     self.timer = nil;
@@ -129,133 +122,6 @@ static BTConnectionManager *instanceOfBTConnectionManager;
     }
 }
 
-#pragma mark - Peripheral delegate methods
-- (BOOL)displayPeripheral: (CBPeripheral*)periph andCharacteristic: (CBCharacteristic*) charact
-{
-//    char *p = (char *)charact.value.bytes;
-    BOOL ok = NO;
-    if (charact == self.massCharact) {
-//        NSDictionary *instructionDict = @{@"value": [Helpers reveseNSData:charact.value]};
-//        if ([self.delegate respondsToSelector:@selector(useRecievedDict:)]) {
-//            [self.delegate useRecievedDict:instructionDict];
-//        }
-        ok = YES;
-    }
-    
-    
-    return ok;
-}
-
-- (BOOL) initCharacteristicForService:(CBService*)serv andCharact:(CBCharacteristic*)charact
-{
-    BOOL done = NO;
-    
-    //BOOL updated;
-    if((self.connectedPeripheral != nil) && (self.connectedPeripheral.isConnected == TRUE))
-    {
-        if((serv.UUID.data.length == SERVICE_UUID_DEFAULT_LEN) &&
-           (memcmp(serv.UUID.data.bytes, massServiceUuid, SERVICE_UUID_DEFAULT_LEN) == 0))
-        {
-            self.massService = serv;
-            
-            if((charact != nil) &&
-               (charact.UUID.data.length == CHARACT_UUID_DEFAULT_LEN) &&
-               (memcmp(charact.UUID.data.bytes, massCharactUuid, CHARACT_UUID_DEFAULT_LEN) == 0))
-            {
-                self.massCharact = charact;
-                [self.connectedPeripheral setNotifyValue:YES forCharacteristic:charact];
-                //updated = [self displayPeripheral: connectedPeripheral andCharacteristic: accRangeCharact];
-                
-                //if(updated == FALSE)
-                [self.connectedPeripheral readValueForCharacteristic: charact];
-                
-                done = YES;
-            }
-        }
-    }
-    
-    return done;
-}
-
-- (void) initConnectedPeripheral
-{
-    CBService*          service;
-    CBCharacteristic*   charact;
-    BOOL                ok;
-    
-    self.connectedPeripheral.delegate = self;
-    
-    if(self.connectedPeripheral.services != nil) {
-        for(int i = 0; i < self.connectedPeripheral.services.count; i++) {
-            service = [self.connectedPeripheral.services objectAtIndex:i];
-            
-            if((service.characteristics != nil) && (service.characteristics.count > 0)) {
-                for(int j = 0; j < service.characteristics.count; j++) {
-                    charact = [service.characteristics objectAtIndex:j];
-                    
-                    ok = [self initCharacteristicForService:service andCharact:charact];
-                }
-            }
-            else {
-                ok = [self initCharacteristicForService:service andCharact:nil];
-            }
-        }
-    }
-    
-    NSMutableArray *arr = [[NSMutableArray alloc] init];
-    NSData *data;
-    CBUUID *uuid;
-    
-    if(!self.massService) {
-        data = [NSData dataWithBytes:massServiceUuid length:SERVICE_UUID_DEFAULT_LEN];
-        uuid = [CBUUID UUIDWithData: data];
-        [arr addObject:uuid];
-    } else if(!self.massCharact) {
-        [self.connectedPeripheral discoverCharacteristics:nil forService:self.massService];
-    }
-    
-    if(arr.count > 0) {
-        [self.connectedPeripheral discoverServices:arr];
-    }
-}
-
-
-
-- (void)peripheral:(CBPeripheral *)periph didDiscoverServices:(NSError *)error
-{
-    CBService   *s;
-    
-    if(periph == self.connectedPeripheral) {
-        for(int i = 0; i < periph.services.count; i++) {
-            s = [[periph services] objectAtIndex:i];
-            [periph discoverCharacteristics:nil forService:s];
-        }
-    }
-}
-
-- (void)peripheral:(CBPeripheral *)periph didDiscoverCharacteristicsForService:(CBService *)serv error:(NSError *)error
-{
-    CBCharacteristic* charact;
-    BOOL ok;
-    
-    if(periph == self.connectedPeripheral)
-    {
-        for(int i = 0; i < serv.characteristics.count; i++)
-        {
-            charact = [serv.characteristics objectAtIndex:i];
-            
-            ok = [self initCharacteristicForService:serv andCharact:charact];
-        }
-    }
-}
-
-- (void)peripheral:(CBPeripheral *)periph didUpdateValueForCharacteristic:(CBCharacteristic *)charact error:(NSError *)error
-{
-    if(!error) {
-        [self displayPeripheral: periph andCharacteristic: charact];
-    }
-}
-
 - (void)peripheral:(CBPeripheral *)periph didWriteValueForCharacteristic:(CBCharacteristic *)charact error:(NSError *)error
 {
     if(periph == self.connectedPeripheral) {
@@ -269,17 +135,5 @@ static BTConnectionManager *instanceOfBTConnectionManager;
 //    return self.connectedPeripheral.identifier.UUIDString;
 }
 
-#pragma mark - H2OPal specific methods
--(double)getMass
-{
-    NSData *result = [Helpers reveseNSData:self.massCharact.value];
-    
-    unsigned mass = 0;
-    NSScanner *scanner = [NSScanner scannerWithString:[result description]];
-    [scanner setScanLocation:1]; // bypass '#' character
-    [scanner scanHexInt:&mass];
-    
-    return mass;
-}
 
 @end
