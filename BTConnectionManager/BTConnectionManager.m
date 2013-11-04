@@ -276,12 +276,12 @@ static BTConnectionManager *instanceOfBTConnectionManager;
 #pragma mark - H2OPal specific methods
 -(double)getMass
 {
-//    NSData *result = [Helpers reveseNSData:self.massCharact.value];
+    NSData *result = [Helpers reveseNSData:self.massCharact.value];
     
     unsigned mass = 0;
-//    NSScanner *scanner = [NSScanner scannerWithString:[result description]];
-//    [scanner setScanLocation:1]; // bypass '#' character
-//    [scanner scanHexInt:&mass];
+    NSScanner *scanner = [NSScanner scannerWithString:[result description]];
+    [scanner setScanLocation:1]; // bypass '#' character
+    [scanner scanHexInt:&mass];
     
     return mass;
 }
