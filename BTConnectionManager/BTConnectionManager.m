@@ -39,7 +39,6 @@ static BTConnectionManager *instanceOfBTConnectionManager;
     } else {
         return [[BTConnectionManager alloc] init];
     }
-    ;
 }
 
 -(id)init
