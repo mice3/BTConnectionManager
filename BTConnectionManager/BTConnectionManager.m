@@ -45,7 +45,11 @@ static BTConnectionManager *instanceOfBTConnectionManager;
 -(id)init
 {
     if (self = [super init]) {
-        self.centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:dispatch_get_main_queue() options:nil];
+        if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 7.0) {
+            self.centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:dispatch_get_main_queue() options:nil];
+        } else {
+            self.centralManager = [[CBCentralManager alloc] initWithDelegate:self queue:nil];
+        }
         self.messageQueue = [[NSMutableArray alloc] init];
         instanceOfBTConnectionManager = self;
     }
