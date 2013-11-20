@@ -11,41 +11,23 @@
 #import <CoreBluetooth/CBPeripheral.h>
 #import "BLEDefinitions.h"
 
-// speed limits
-#define kMinSpeed 0
-// instructions
-#define kMotorSpeed @"motorSpeed"
-#define kMotorDistance @"motorDistance"
-#define kMotorBattery @"motorBattery"
-#define kMotorError @"motorError"
-
-typedef enum
-{
-    CHAT_S_NOT_LOADED,
-    CHAT_S_DISAPPEARED,
-    CHAT_S_APPEARED_IDLE,
-    CHAT_S_APPEARED_WAIT_TX,
-    CHAT_S_APPEARED_NO_CONNECT_PERIPH
-    
-} CHAT_State;
-
 @protocol BTConnectionManagerDelegate <NSObject>
 -(void)useRecievedDict:(NSDictionary *)dataDict;
--(void)readyToScanForPeripherals;
 @optional
 -(void)peripheralConnected;
 -(void)peripheralDisconnected;
+-(void)peripheralDiscovered;
 @end
 
-@interface BTConnectionManager : NSObject <CBCentralManagerDelegate>
-{
-    CHAT_State      state;
-}
+@interface BTConnectionManager : NSObject <CBCentralManagerDelegate, CBPeripheralDelegate>
+
 @property (nonatomic, strong) id<BTConnectionManagerDelegate> delegate;
+@property (nonatomic, strong) NSMutableArray  *deviceArray;
 @property (nonatomic, strong) CBPeripheral  *connectedPeripheral;
 
-+(BTConnectionManager *)sharedInstance;
--(void)scan;
--(NSString *)getDiscoveredPeripheralId;
++ (BTConnectionManager *)sharedInstance;
+- (void)scan;
+- (NSArray *)discoveredDeviceArray;
+- (void)connectPeripheral:(CBPeripheral *)peripheral withOptions:(NSDictionary *)options;
 
 @end
