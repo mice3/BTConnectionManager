@@ -59,8 +59,20 @@ static BTConnectionManager *instanceOfBTConnectionManager;
 #pragma mark - CBCentraManagerDelegate
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central
 {
-    if(central.state == CBCentralManagerStatePoweredOn) {
-        [self scan];
+    switch (central.state) {
+        case CBCentralManagerStatePoweredOn:
+            [self scan];
+            break;
+        case CBCentralManagerStatePoweredOff:
+            if ([self.delegate respondsToSelector:@selector(errorHandler:)]) {
+                NSDictionary *errorDict = @{@"errorCode": @"CBCentralManagerStatePoweredOff", @"errorDescription": @"BluetoothTurnedOff"};
+                [self.delegate errorHandler:errorDict];
+            }
+            [self scan];
+            break;
+            
+        default:
+            break;
     }
 }
 
@@ -127,7 +139,9 @@ static BTConnectionManager *instanceOfBTConnectionManager;
 
 - (void)disconnectPeripheral
 {
-    [self.centralManager cancelPeripheralConnection:self.connectedPeripheral];
+    if (self.connectedPeripheral) {
+        [self.centralManager cancelPeripheralConnection:self.connectedPeripheral];
+    }
 }
 
 @end

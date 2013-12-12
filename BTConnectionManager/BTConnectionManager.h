@@ -13,6 +13,7 @@
 
 @protocol BTConnectionManagerDelegate <NSObject>
 -(void)useRecievedDict:(NSDictionary *)dataDict;
+-(void)errorHandler:(NSDictionary *)error;
 @optional
 -(void)peripheralConnected;
 -(void)peripheralDisconnected;
