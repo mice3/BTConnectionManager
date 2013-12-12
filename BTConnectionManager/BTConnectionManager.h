@@ -29,5 +29,6 @@
 - (void)scan;
 - (NSArray *)discoveredDeviceArray;
 - (void)connectPeripheral:(CBPeripheral *)peripheral withOptions:(NSDictionary *)options;
+- (void)disconnectPeripheral;
 
 @end

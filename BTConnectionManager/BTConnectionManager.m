@@ -125,4 +125,9 @@ static BTConnectionManager *instanceOfBTConnectionManager;
     [self.centralManager connectPeripheral:peripheral options:options];
 }
 
+- (void)disconnectPeripheral
+{
+    [self.centralManager cancelPeripheralConnection:self.connectedPeripheral];
+}
+
 @end
