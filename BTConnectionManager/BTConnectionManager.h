@@ -22,6 +22,7 @@
 
 @interface BTConnectionManager : NSObject <CBCentralManagerDelegate, CBPeripheralDelegate>
 
+@property (nonatomic, strong) CBCentralManager *centralManager;
 @property (nonatomic, strong) id<BTConnectionManagerDelegate> delegate;
 @property (nonatomic, strong) NSMutableArray  *deviceArray;
 @property (nonatomic, strong) CBPeripheral  *connectedPeripheral;

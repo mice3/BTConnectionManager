@@ -49,6 +49,8 @@ extern const unsigned char regCertCharactUuid[CHARACT_UUID_DEFAULT_LEN];
 // RokC: H2OPal services
 extern const unsigned char massServiceUuid[CHARACT_UUID_DEFAULT_LEN];
 extern const unsigned char massCharactUuid[CHARACT_UUID_DEFAULT_LEN];
+extern const unsigned char previousMassServiceUuid[CHARACT_UUID_DEFAULT_LEN];
+extern const unsigned char previousMassCharactUuid[CHARACT_UUID_DEFAULT_LEN];
 
 extern NSString* strFromServiceUUID(CBUUID *uuid);
 extern NSString* strFromCharacteristicUUID(CBUUID *serviceUuid, CBUUID *charactUuid);

@@ -15,8 +15,6 @@
 
 @interface BTConnectionManager ()
 
-@property (nonatomic, strong) CBCentralManager *centralManager;
-
 @end
 
 static BTConnectionManager *instanceOfBTConnectionManager;
@@ -65,7 +63,7 @@ static BTConnectionManager *instanceOfBTConnectionManager;
             break;
         case CBCentralManagerStatePoweredOff:
             if ([self.delegate respondsToSelector:@selector(errorHandler:)]) {
-                NSDictionary *errorDict = @{@"errorCode": @"CBCentralManagerStatePoweredOff", @"errorDescription": @"BluetoothTurnedOff"};
+                NSDictionary *errorDict = @{@"errorCode": @"CBCentralManagerStatePoweredOff", NSLocalizedString(@"errorDescription", nil): @"BluetoothTurnedOff"};
                 [self.delegate errorHandler:errorDict];
             }
             [self scan];
