@@ -38,7 +38,6 @@ const unsigned char ledServiceUuid[SERVICE_UUID_DEFAULT_LEN]       = {0xff, 0xd0
 const unsigned char massServiceUuid[CHARACT_UUID_DEFAULT_LEN]               = {0xff, 0xc0};
 const unsigned char massCharactUuid[CHARACT_UUID_DEFAULT_LEN]               = {0xff, 0xc1};
 // previous mass characteristic
-const unsigned char previousMassServiceUuid[CHARACT_UUID_DEFAULT_LEN]       = {0xff, 0xc2};
 const unsigned char previousMassCharactUuid[CHARACT_UUID_DEFAULT_LEN]       = {0xff, 0xc3};
 
 const unsigned char   serialPortServiceUuid[SERIAL_PORT_SERVICE_UUID_LEN] = {
