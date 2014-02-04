@@ -39,6 +39,7 @@ const unsigned char massServiceUuid[CHARACT_UUID_DEFAULT_LEN]               = {0
 const unsigned char massCharactUuid[CHARACT_UUID_DEFAULT_LEN]               = {0xff, 0xc1};
 // history characteristic
 const unsigned char historyCharactUuid[CHARACT_UUID_DEFAULT_LEN]       = {0xff, 0xc3};
+const unsigned char settingsCharactUuid[6]       = {0xff, 0xc3};
 
 const unsigned char   serialPortServiceUuid[SERIAL_PORT_SERVICE_UUID_LEN] = {
     0x24, 0x56, 0xe1, 0xb9, 0x26, 0xe2, 0x8f, 0x83,

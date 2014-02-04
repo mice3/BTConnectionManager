@@ -50,6 +50,7 @@ extern const unsigned char regCertCharactUuid[CHARACT_UUID_DEFAULT_LEN];
 extern const unsigned char massServiceUuid[CHARACT_UUID_DEFAULT_LEN];
 extern const unsigned char massCharactUuid[CHARACT_UUID_DEFAULT_LEN];
 extern const unsigned char historyCharactUuid[CHARACT_UUID_DEFAULT_LEN];
+extern const unsigned char settingsCharactUuid[6];
 
 extern NSString* strFromServiceUUID(CBUUID *uuid);
 extern NSString* strFromCharacteristicUUID(CBUUID *serviceUuid, CBUUID *charactUuid);
