@@ -337,6 +337,14 @@ NSString* strFromCharacteristicUUID(CBUUID *serviceUuid, CBUUID *charactUuid)
            (memcmp(charactUuid.data.bytes, massCharactUuid, CHARACT_UUID_DEFAULT_LEN) == 0))
         {
             str = @"Mass";
+        } else if((charactUuid.data.length == CHARACT_UUID_DEFAULT_LEN) &&
+                  (memcmp(charactUuid.data.bytes, historyCharactUuid, CHARACT_UUID_DEFAULT_LEN) == 0))
+        {
+            str = @"History";
+        } else if((charactUuid.data.length == CHARACT_UUID_DEFAULT_LEN) &&
+                  (memcmp(charactUuid.data.bytes, settingsCharactUuid, 6) == 0))
+        {
+            str = @"Settings";
         }
     }
     
