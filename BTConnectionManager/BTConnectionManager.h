@@ -27,7 +27,7 @@
 @property (nonatomic, strong) NSMutableArray  *deviceArray;
 @property (nonatomic, strong) CBPeripheral  *connectedPeripheral;
 
-+ (BTConnectionManager *)sharedInstance;
+//+ (BTConnectionManager *)sharedInstance;
 - (void)scan;
 - (NSArray *)discoveredDeviceArray;
 - (void)connectPeripheral:(CBPeripheral *)peripheral withOptions:(NSDictionary *)options;

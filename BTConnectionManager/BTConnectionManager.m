@@ -49,8 +49,11 @@ static BTConnectionManager *instanceOfBTConnectionManager;
 {
 #if !TARGET_IPHONE_SIMULATOR
     NSLog(@"Started scanning");
-    NSDictionary *dictionary = [NSDictionary dictionaryWithObject:[NSNumber numberWithInt:1] forKey:CBCentralManagerScanOptionAllowDuplicatesKey];
-    [self.centralManager scanForPeripheralsWithServices:nil options:dictionary];
+//    NSDictionary *dictionary = [NSDictionary dictionaryWithObject:[NSNumber numberWithInt:0] forKey:CBCentralManagerScanOptionAllowDuplicatesKey];
+//    NSData *data = [NSData dataWithBytes:massServiceUuid length:SERVICE_UUID_DEFAULT_LEN];
+//    CBUUID *uuid = [CBUUID UUIDWithData: data];
+    [self.centralManager scanForPeripheralsWithServices:[NSArray arrayWithObject:[CBUUID UUIDWithString:@"ffc0"]] options:nil];
+//    [self.centralManager scanForPeripheralsWithServices:nil options:dictionary];
 #endif
 }
 
